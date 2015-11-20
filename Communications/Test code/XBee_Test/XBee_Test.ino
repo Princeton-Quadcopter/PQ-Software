@@ -7,11 +7,6 @@ const int TX = 3;   // TX pin connected to RX of XBee
 //establishes serial connection
 SoftwareSerial globalSerial = SoftwareSerial(RX, TX);
 
-// struct TransmitPacket {
-//   char fID;
-//   unsigned int 
-// };
-
 void setup()
 {
   // set up pins
