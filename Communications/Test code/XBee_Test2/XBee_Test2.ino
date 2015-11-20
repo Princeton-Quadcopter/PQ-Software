@@ -1,48 +1,29 @@
-#include <XBee.h>
+#include "Printers.h"
+#include "XBee.h"
 
 XBee xbee = XBee();
+
+uint8_t payload[] = { 'H', 'i' };
+
+XBeeAddress64 addr64 = XBeeAddress64(0x0013a200, 0x40b3d56e);
+
+Tx16Request tx16 = Tx16Request(addr64, payload, sizeof(payload));
 
 void setup()
 {
     pinMode(13, OUTPUT);
-    // XBee serial connection
-    xbee.begin(9600);
-
-    // Computer serial connection
+    // Start the serial port
     Serial.begin(9600);
+    // Tell XBee to use Hardware Serial. It's also possible to use SoftwareSerial
+    xbee.setSerial(Serial);
 }
 
-void loop()                     // run over and over again
+void loop()
 {
-    digitalWrite(13, LOW);
-    while (mySerial.available()) {
-        digitalWrite(13, HIGH);
-        Serial.print((char)mySerial.read());
-        //delay(10);
-    }
-    digitalWrite(13, LOW);
-    delay(1000);
-    sendTransmitRequest(mySerial, 1, 0x0000, 0x00, 5, "hello");
-    delay(1000);
-}
-
-// Various methods
-
-void sendTransmitRequest(SoftwareSerial serial, char fID, unsigned int destAddr, char options, char len, char message[])
-{
-//  char checksum = 1 + fID + (destAddr >> 8) + (destAddr % 256) + options;
-//  
-//  serial.print(0x7E);
-//  serial.print(len + 5);
-//  serial.print(1);
-//  serial.print(fID);
-//  serial.print(destAddr);
-//  serial.print(options);
-for (int i = 0; i < len; i++)
-{
-    serial.print(message[i]);
-    //checksum += message[i];
-}
-  //Serial.print(0xff - checksum, HEX);
-//  serial.print(0xff - checksum);
+    digitalWrite(13, 1);
+    xbee.send( tx16 );
+    delay(500);
+    digitalWrite(13, 0);
+    delay(500);
+    xbee.receive();
 }
