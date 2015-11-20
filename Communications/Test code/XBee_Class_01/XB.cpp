@@ -2,10 +2,9 @@
 #include "XB.h"
 #include <SoftwareSerial.h>
 
-XB::XB(uint8_t RX, uint8_t TX, int baudrate) :
-    serial(RX, TX, false)
-{
-    //serial = SoftwareSerial(RX, TX, false);
+XB::XB(uint8_t RX, uint8_t TX, int baudrate)
+        : serial(RX, TX, false) {
+    // Instantiate serial and begin with given baudrate
     serial.begin(baudrate);
 }
 
@@ -14,17 +13,73 @@ bool XB::anythingtoread() {
 }
 
 // returns the MSB of 2 bytes
-char getMSB(int a) {
-  return a >> 8;
+byte getMSB(int a) {
+    return a >> 8;
 }
 
 // returns the LSB of sequence of bytes
-char getLSB(int a) {
-  return a % 256;
+byte getLSB(int a) {
+    return a % 256;
 }
 
-void XB::sendTransmitRequest(char fID, unsigned int destAddr, char options, char len, char message[])
-{
+XB::genericPacket XB::readNextGenericPacket() {
+    byte magicByte = serial.read();
+    byte temp = serial.read();
+    unsigned int length = (temp << 8) + (serial.read());
+    byte checksum = 0;
+    genericPacket result;
+
+    if (magicByte != 0x7E || length == 0) {
+        result.goodPacket = false;
+        return result;
+    }
+    result.goodPacket = true;
+    result.len = length - 1;
+
+    result.frameType = serial.read();
+    checksum += result.frameType;
+    // Serial.print("Frame type: ");
+    // Serial.println(result.frameType, HEX);
+    for (int i = 0; i < length - 1; i++) { // TODO: throw error if length is too big
+        result.contents[i] = serial.read();
+        checksum += result.contents[i];
+        //Serial.print(result.contents[i], HEX);
+        //Serial.print(" ");
+    }
+    //Serial.println();
+    result.goodCheckSum = (0xff - checksum == serial.read());
+    // if (result.goodCheckSum)
+    //     Serial.println("Good check sum!");
+    // else
+    //     Serial.println("Bad check sum");
+
+    return result;
+}
+
+void XB::flushSerial() {
+    serial.flush();
+}
+
+// Returns 0x00 if successful
+byte XB::send(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
+    sendTransmitRequest(fID, destAddr, options, len, message);
+    // Wait for transmit status to be received
+    while (!serial.available()) {
+        delay(10);
+    }
+
+    // Parse transmit status
+    // TODO: check correct frame type, and correct fID, etc.
+    genericPacket result = readNextGenericPacket();
+    if (result.len < 2 || !result.goodPacket)
+        return -1;
+    return result.contents[1];
+
+    //serial.flush();
+}
+
+// Sends a transmit request to the XBee to send a message to destAddr: frame ID = fID, len is length of message[];
+void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
   // constants
   const char magicByte = 0x7E;
   const int lenToData = 5;
@@ -56,7 +111,4 @@ void XB::sendTransmitRequest(char fID, unsigned int destAddr, char options, char
     serial.print(payload[i]);
     //Serial.println(payload[i], HEX);
   }
-
-  delay(10);
-  serial.flush();
 }
