@@ -44,8 +44,18 @@ void loop()
     // Prepare to send a message to the computer
     digitalWrite(LED, LOW);
     delay(10);
-    Serial.println("About to write");
-    byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");
+    
+    // build message to send
+    XBpacket packet;
+    packet.type = PACKET_SEND;
+    packet.destAddr = 0x0000;
+    packet.ID = 0x01;
+    packet.options = 0x00;
+    packet.length = 0x05;
+    char msg[6] = "hello";
+    packet.message = msg;
+
+    byte result = ourXB.send(packet);
     if (result == 0) {
         Serial.println("Writing successful");
     }

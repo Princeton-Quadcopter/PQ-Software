@@ -1,6 +1,7 @@
 #include "Arduino.h"
 #include "XB.h"
 #include <SoftwareSerial.h>
+#include "QCMath.h"
 
 const byte FRAME_HEADER_MAGIC_BYTE = 0x7E;
 const byte FRAME_TRANSMIT_REQUEST = 0x01;
@@ -15,16 +16,6 @@ XB::XB(uint8_t RX, uint8_t TX, int baudrate)
 
 bool XB::available() {
     return serial.available();
-}
-
-// returns the MSB of 2 bytes
-byte getMSB(int a) {
-    return a >> 8;
-}
-
-// returns the LSB of sequence of bytes
-byte getLSB(int a) {
-    return a % 256;
 }
 
 XB::genericPacket XB::readNextGenericPacket() {
@@ -56,8 +47,13 @@ void XB::flushSerial() {
     serial.flush();
 }
 
+// See XB::sendRaw
+byte XB::send(XBpacket packet) {
+    return sendRaw(packet.ID, packet.destAddr, packet.options, packet.len, packet.message);
+}
+
 // Returns 0x00 if successful; Returns -1 if bad packet or not transmit status or not expected fID;
-// Returns other codes if other errors occurred.
+// Returns other codes if other errors occurred (see Frames Generator on XCTU).
 byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
     sendTransmitRequest(fID, destAddr, options, len, message);
     // Wait for transmit status to be received
@@ -67,6 +63,7 @@ byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len
 
     // Parse transmit status
     genericPacket result = readNextGenericPacket();
+    // TODO: if necessary, make an array of received packets so that various frame IDs can be accessed non-chronologically
     if (result.length < 2 || !result.goodPacket || result.frameType != FRAME_TRANSMIT_STATUS)
         return -1;
     if (result.contents[0] != fID)
