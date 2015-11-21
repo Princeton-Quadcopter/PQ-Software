@@ -14,7 +14,8 @@ struct XBpacket {
     byte type;
     
     unsigned int length; // length of message[]
-    char message[MAX_DATA_SIZE];
+    //char message[MAX_DATA_SIZE];
+    char* message;
     
     byte ID;
     byte options;
@@ -34,10 +35,13 @@ class XB {
         struct genericPacket { // A very generic struct for storing packet data
             byte frameType;
             unsigned int length; // length of contents[]
-            char contents[MAX_DATA_SIZE];
+            //char contents[MAX_DATA_SIZE];
+            char* contents;
             bool goodPacket; // true if start delimiter is 7E
             bool goodCheckSum; // true if checksum is correct
         };
+
+        byte read();
 
         XB(uint8_t RX, uint8_t TX, int baudrate);
         byte send(XBpacket packet);

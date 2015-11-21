@@ -29,7 +29,13 @@ void loop()
         delay(10);
     }
     delay(100);
-    ourXB.flushSerial();
+    
+    while (ourXB.available()) {
+        digitalWrite(LED, HIGH);
+        char received = ourXB.read();
+        //Serial.println(received, HEX);
+        Serial.print(received);
+    }
 
     // Print everything in the read buffer
     // while (globalSerial.available()) {
@@ -46,16 +52,18 @@ void loop()
     delay(10);
     
     // build message to send
-    XBpacket packet;
-    packet.type = PACKET_SEND;
-    packet.destAddr = 0x0000;
-    packet.ID = 0x01;
-    packet.options = 0x00;
-    packet.length = 0x05;
-    char msg[6] = "hello";
-    packet.message = msg;
+    // XBpacket packet;
+    // packet.type = PACKET_SEND;
+    // packet.destAddr = 0x0000;
+    // packet.ID = 0x01;
+    // packet.options = 0x00;
+    // packet.length = 0x05;
+    // char msg[6] = "hello";
+    // packet.message = msg;
 
-    byte result = ourXB.send(packet);
+    //byte result = ourXB.send(packet);
+    //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");
+    byte result = ourXB.sendRaw(1, 0x0000, 0x00, 70, "1234567812345678123456781234567812345678123456781234567812345678hiiiii");
     if (result == 0) {
         Serial.println("Writing successful");
     }

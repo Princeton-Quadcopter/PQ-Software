@@ -18,6 +18,10 @@ bool XB::available() {
     return serial.available();
 }
 
+byte XB::read() {
+    return serial.read();
+}
+
 XB::genericPacket XB::readNextGenericPacket() {
     byte magicByte = serial.read();
     byte temp = serial.read();
@@ -49,12 +53,12 @@ void XB::flushSerial() {
 
 // See XB::sendRaw
 byte XB::send(XBpacket packet) {
-    return sendRaw(packet.ID, packet.destAddr, packet.options, packet.len, packet.message);
+    return sendRaw(packet.ID, packet.destAddr, packet.options, packet.length, packet.message);
 }
 
 // Returns 0x00 if successful; Returns -1 if bad packet or not transmit status or not expected fID;
 // Returns other codes if other errors occurred (see Frames Generator on XCTU).
-byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
+byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len, char* message) {
     sendTransmitRequest(fID, destAddr, options, len, message);
     // Wait for transmit status to be received
     while (!serial.available()) {
@@ -72,7 +76,7 @@ byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len
 }
 
 // Sends a transmit request to the XBee to send a message to destAddr: frame ID = fID, len is length of message[];
-void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
+void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char* message) {
   // constants
   const int lenToData = 5;
 
