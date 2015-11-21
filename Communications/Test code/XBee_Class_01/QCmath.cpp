@@ -10,3 +10,8 @@ byte getMSB(int a) {
 byte getLSB(int a) {
     return a % 256;
 }
+
+// converts two bytes into an unsigned int
+unsigned int twoBytesToUInt(byte msb, byte lsb) {
+    return (msb << 8) | lsb;
+}

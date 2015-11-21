@@ -29,20 +29,24 @@ void loop()
         delay(10);
     }
     delay(100);
-    
-    while (ourXB.available()) {
-        digitalWrite(LED, HIGH);
-        char received = ourXB.read();
-        //Serial.println(received, HEX);
-        Serial.print(received);
-    }
 
-    // Print everything in the read buffer
-    // while (globalSerial.available()) {
+    // Serial.print(" --> ");
+    // Serial.println(ourXB.peek(), HEX);
+    //XBpacket pck = ourXB.receiveMessage();
+    ourXB.readNextGenericPacket();
+    // if (pck.type == PACKET_RECEIVE) {
+    //     Serial.println(pck.message);
+    // } else {
+    //     Serial.print("Bad message... Packet type ");
+    //     Serial.println(pck.type);
+    // }
+    // ourXB.flushSerial();
+    
+    // while (ourXB.available()) {
     //     digitalWrite(LED, HIGH);
-    //     char received = globalSerial.read();
-    //     //Serial.println(received, HEX);
-    //     Serial.print(received);
+    //     byte received = ourXB.read();
+    //     Serial.println(received, HEX);
+    //     //Serial.print(received);
     // }
 
     Serial.println();
@@ -52,20 +56,26 @@ void loop()
     delay(10);
     
     // build message to send
-    // XBpacket packet;
-    // packet.type = PACKET_SEND;
-    // packet.destAddr = 0x0000;
-    // packet.ID = 0x01;
-    // packet.options = 0x00;
-    // packet.length = 0x05;
-    // char msg[6] = "hello";
-    // packet.message = msg;
+    XBpacket packet;
+    packet.type = PACKET_SEND;
+    packet.destAddr = 0x0000;
+    packet.ID = 0x01;
+    packet.options = 0x00;
+    packet.length = 0x05;
+    packet.message = "hello";
 
-    //byte result = ourXB.send(packet);
+    byte result = 0;//ourXB.send(packet);
     //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");
-    byte result = ourXB.sendRaw(1, 0x0000, 0x00, 70, "1234567812345678123456781234567812345678123456781234567812345678hiiiii");
+    //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 70, "1234567812345678123456781234567812345678123456781234567812345678hiiiii");
     if (result == 0) {
         Serial.println("Writing successful");
     }
     delay(10);
+    //ourXB.flushSerial();
+    while (ourXB.available()) {
+        digitalWrite(LED, HIGH);
+        byte received = ourXB.read();
+        Serial.println(received, HEX);
+        //Serial.print(received);
+    }
 }

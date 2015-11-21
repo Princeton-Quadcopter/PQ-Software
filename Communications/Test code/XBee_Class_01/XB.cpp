@@ -22,14 +22,19 @@ byte XB::read() {
     return serial.read();
 }
 
+byte XB::peek() {
+    return serial.peek();
+}
+
 XB::genericPacket XB::readNextGenericPacket() {
     byte magicByte = serial.read();
     byte temp = serial.read();
-    unsigned int len = (temp << 8) + (serial.read());
+    unsigned int len = twoBytesToUInt(temp, serial.read());
     byte checksum = 0;
     genericPacket result;
 
-    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
+    //if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
+    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0) {
         result.goodPacket = false;
         return result;
     }
@@ -38,17 +43,61 @@ XB::genericPacket XB::readNextGenericPacket() {
 
     result.frameType = serial.read();
     checksum += result.frameType;
-    for (int i = 0; i < len - 1; i++) {
-        result.contents[i] = serial.read();
-        checksum += result.contents[i];
+    Serial.println(len - 1);
+    for (unsigned int i = 0; i < len - 1; i++) {
+        byte readByte = serial.read();
+        result.contents[i] = readByte;
+        checksum += readByte;
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.println(readByte, HEX);
     }
-    result.goodCheckSum = (0xff - checksum == serial.read());
+    byte expectedCheckSum = serial.read();
+    result.goodCheckSum = (0xff - checksum == expectedCheckSum);
+    Serial.println("Checksums: exp vs reality");
+    Serial.println(0xff - checksum, HEX);
+    Serial.println(expectedCheckSum, HEX);
 
     return result;
 }
 
 void XB::flushSerial() {
     serial.flush();
+}
+
+// Parses a generic packet as if it's a received message frame.
+// Returns the packet in XBpacket form; if it's not a receive message frame, the `type' field is -1.
+XBpacket XB::parseMessage(genericPacket packet) {
+    XBpacket result;
+
+    if (!packet.goodPacket || !packet.goodCheckSum) {
+        result.type = -1;
+        return result;
+    }
+
+    Serial.print("Frame type ");
+    Serial.println(packet.frameType, HEX);
+    if (packet.frameType != FRAME_RECEIVE_PACKET || packet.length < 4) {
+        result.type = -1;
+        return result;
+    }
+
+    result.type = PACKET_RECEIVE;
+    result.srcAddr = twoBytesToUInt(packet.contents[0], packet.contents[1]);
+    result.RSSI = packet.contents[2];
+    result.options = packet.contents[3];
+    result.length = packet.length - 4;
+    result.message = packet.contents + 4; // lol is this too jank?
+
+    return result;
+}
+
+XBpacket XB::receiveMessage() {
+    // while (serial.peek() != 0x7E) {
+    //     serial.read();
+    //     delay(10);
+    // }
+    return parseMessage(readNextGenericPacket());
 }
 
 // See XB::sendRaw
