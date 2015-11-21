@@ -52,7 +52,6 @@ XB::genericPacket XB::readNextGenericPacket() {
     // Get frame type and all following bytes until the checksum
     result.frameType = serial.read();
     checksum += result.frameType;
-    Serial.print("(");
     for (unsigned int i = 0; i < len - 1; i++) {
         if (!serial.available()) {
             result.length = i; // trying to make output of parseMessage more meaningful
@@ -61,11 +60,8 @@ XB::genericPacket XB::readNextGenericPacket() {
         byte readByte = serial.read();
         result.contents[i] = readByte;
         checksum += readByte;
-        delay(50);
-        Serial.print(i);
-        Serial.print(" ");
+        delay(10);
     }
-    Serial.println(")");
 
     // Check the checksum
     byte expectedCheckSum = serial.read();
@@ -112,10 +108,19 @@ XBpacket XB::receiveMessage() {
 }
 
 void XB::flushUntilStartFrame() {
-    while (serial.peek() != 0x7E) {
+    while (serial.peek() != 0x7E && serial.available()) {
         serial.read();
-        delay(50);
+        delay(10);
     }
+}
+
+void XB::printLeftoverBytes() {
+    while (serial.available()) {
+        byte received = serial.read();
+        Serial.print(received, HEX);
+        Serial.print(" ");
+    }
+    Serial.println();
 }
 
 // See XB::sendRaw

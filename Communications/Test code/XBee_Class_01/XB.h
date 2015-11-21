@@ -50,6 +50,7 @@ class XB {
         bool available();
         void flushSerial();
         void flushUntilStartFrame();
+        void printLeftoverBytes();
 
     private:
         SoftwareSerial serial;

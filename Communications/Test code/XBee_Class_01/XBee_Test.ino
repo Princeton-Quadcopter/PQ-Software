@@ -44,17 +44,14 @@ void loop()
             Serial.print(pck.type);
             Serial.print(" length ");
             Serial.println(pck.length);
-            ourXB.flushUntilStartFrame();
+            //ourXB.flushUntilStartFrame();
+            ourXB.flushSerial();
         }
 
-        // while (ourXB.available()) {
-        //     byte received = ourXB.read();
-        //     Serial.print(received, HEX);
-        //     Serial.print(" ");
-        //     //Serial.print(received);
-        // }
-        // Serial.println();
+        //ourXB.printLeftoverBytes();
     }
+
+    //ourXB.printLeftoverBytes();
 
     // Prepare to send a message to the computer
     digitalWrite(LED, LOW);
@@ -71,20 +68,14 @@ void loop()
 
     byte result = ourXB.send(packet);
     if (result == 0) {
-        Serial.println("Writing successful");
+        Serial.println("Transmission successful");
     }
     delay(10);
     //ourXB.flushSerial();
     // if (ourXB.available()) {
     //     Serial.println("Miscellaneous bytes left in read buffer:");
-    //     while (ourXB.available()) {
-    //         byte received = ourXB.read();
-    //         Serial.print(received, HEX);
-    //         Serial.print(" ");
-    //         //Serial.print(received);
-    //     }
-    //     Serial.println();
+    //     ourXB.printLeftoverBytes();
     // }
 }
 
-// note: using XCTU to transmit an 8-byte message at 200 ms intervals eventually causes misinterpreted packets.
+// note: using XCTU to transmit an 8-byte message at 200 ms intervals (even 500 ms) eventually causes misinterpreted packets.
