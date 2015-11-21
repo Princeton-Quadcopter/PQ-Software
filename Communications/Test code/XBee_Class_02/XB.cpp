@@ -154,7 +154,7 @@ void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsi
 
     // len is the length of the message
     char payload[len + 9];
-    char checksum = 1 + fID + getMSB(destAddr) + getLSB(destAddr) + options;
+    byte checksum = 1 + fID + getMSB(destAddr) + getLSB(destAddr) + options;
 
     // beginning of frame
     payload[0] = FRAME_HEADER_MAGIC_BYTE;
