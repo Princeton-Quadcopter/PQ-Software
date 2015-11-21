@@ -20,7 +20,7 @@ class XB {
         XB(uint8_t RX, uint8_t TX, int baudrate);
         //int send(XBpacket packet);
         byte send(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]);
-        bool anythingtoread();
+        bool available();
         void flushSerial();
 
     private:

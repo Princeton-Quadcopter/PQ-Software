@@ -8,7 +8,7 @@ XB::XB(uint8_t RX, uint8_t TX, int baudrate)
     serial.begin(baudrate);
 }
 
-bool XB::anythingtoread() {
+bool XB::available() {
     return serial.available();
 }
 
@@ -38,20 +38,11 @@ XB::genericPacket XB::readNextGenericPacket() {
 
     result.frameType = serial.read();
     checksum += result.frameType;
-    // Serial.print("Frame type: ");
-    // Serial.println(result.frameType, HEX);
     for (int i = 0; i < length - 1; i++) { // TODO: throw error if length is too big
         result.contents[i] = serial.read();
         checksum += result.contents[i];
-        //Serial.print(result.contents[i], HEX);
-        //Serial.print(" ");
     }
-    //Serial.println();
     result.goodCheckSum = (0xff - checksum == serial.read());
-    // if (result.goodCheckSum)
-    //     Serial.println("Good check sum!");
-    // else
-    //     Serial.println("Bad check sum");
 
     return result;
 }
