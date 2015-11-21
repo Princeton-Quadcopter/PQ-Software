@@ -83,16 +83,18 @@ void XB::flushSerial() {
 XBpacket XB::parseMessage(genericPacket packet) {
     XBpacket result;
 
+    // All the possible things that could go wrong with this packet
     result.type = PACKET_RECEIVE;
     if (!packet.goodPacket) { result.type = -1; }
     if (!packet.goodCheckSum) { result.type = -2; }
     if (packet.frameType != FRAME_RECEIVE_PACKET) { result.type = -2; }
     if (packet.length < 4) { result.type = -4; }
-
+    // If any of them were bad, stop now and return an error in the form of an XBpacket
     if (result.type != PACKET_RECEIVE) {
         return result;
     }
 
+    // If everything is alright, construct the XBpacket from the generic packet
     result.srcAddr = twoBytesToUInt(packet.contents[0], packet.contents[1]);
     result.RSSI = packet.contents[2];
     result.options = packet.contents[3];
@@ -102,11 +104,14 @@ XBpacket XB::parseMessage(genericPacket packet) {
     return result;
 }
 
+// Flush everything until the first magic byte, then read the next generic packet
+// and parse it as though it were a message packet.
 XBpacket XB::receiveMessage() {
     flushUntilStartFrame();
     return parseMessage(readNextGenericPacket());
 }
 
+// Helper: flush read buffer until first magic byte
 void XB::flushUntilStartFrame() {
     while (serial.peek() != 0x7E && serial.available()) {
         serial.read();
@@ -114,6 +119,7 @@ void XB::flushUntilStartFrame() {
     }
 }
 
+// Helper: flush the read buffer, but print the bytes in hex in the process
 void XB::printLeftoverBytes() {
     while (serial.available()) {
         byte received = serial.read();
