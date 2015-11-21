@@ -7,12 +7,13 @@
 // struct XBpacket stuff
 const byte PACKET_SEND = 0;
 const byte PACKET_RECEIVE = 1;
+const unsigned int MAX_DATA_SIZE = 64;
 
 struct XBpacket {
     byte type;
     
     unsigned int length; // length of message[]
-    char* message;
+    char message[MAX_DATA_SIZE];
     
     byte options;
 
@@ -32,7 +33,7 @@ class XB {
         struct genericPacket { // A very generic struct for storing packet data
             byte frameType;
             unsigned int length; // length of contents[]
-            char* contents;
+            char contents[MAX_DATA_SIZE];
             bool goodPacket; // true if start delimiter is 7E
             bool goodCheckSum; // true if checksum is correct
         };

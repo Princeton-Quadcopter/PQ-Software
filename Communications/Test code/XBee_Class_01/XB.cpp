@@ -1,7 +1,7 @@
 #include "Arduino.h"
 #include "XB.h"
 #include <SoftwareSerial.h>
-#include "QCMath.h"
+#include "QCutil.h"
 
 const byte FRAME_HEADER_MAGIC_BYTE = 0x7E;
 const byte FRAME_TRANSMIT_REQUEST = 0x01;
@@ -33,8 +33,8 @@ XB::genericPacket XB::readNextGenericPacket() {
     byte checksum = 0;
     genericPacket result;
 
-    //if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
-    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0) {
+    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
+    //if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0) {
         result.goodPacket = false;
         return result;
     }
@@ -87,7 +87,7 @@ XBpacket XB::parseMessage(genericPacket packet) {
     result.RSSI = packet.contents[2];
     result.options = packet.contents[3];
     result.length = packet.length - 4;
-    result.message = packet.contents + 4; // lol is this too jank?
+    copyStr(packet.contents, result.message, 0, 4, packet.length - 4);
 
     return result;
 }

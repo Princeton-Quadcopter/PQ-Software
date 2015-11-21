@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
 #include <XB.h>
+#include "QCutil.h"
 
 const int LED = 13; // High when reading
 const int RX = 2;   // RX pin connected to TX of XBee
@@ -62,7 +63,7 @@ void loop()
     packet.ID = 0x01;
     packet.options = 0x00;
     packet.length = 0x05;
-    packet.message = "hello";
+    copyStr("hello", packet.message, 0, 0, 5);
 
     byte result = 0;//ourXB.send(packet);
     //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");

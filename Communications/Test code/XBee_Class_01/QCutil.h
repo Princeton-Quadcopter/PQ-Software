@@ -1,5 +1,5 @@
-#ifndef QCMath_h
-#define QCMath_h
+#ifndef QCutil_h
+#define QCutil_h
 
 #include "Arduino.h"
 
@@ -11,5 +11,8 @@ byte getLSB(int a);
 
 // converts two bytes into an unsigned int
 unsigned int twoBytesToUInt(byte msb, byte lsb);
+
+// copies string src to string dest, from ind onwards, for length len
+void copyStr(char* src, char* dest, int indsrc, int inddest, int len);
 
 #endif
