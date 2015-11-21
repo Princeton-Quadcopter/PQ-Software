@@ -49,6 +49,7 @@ class XB {
         byte peek();
         bool available();
         void flushSerial();
+        void flushUntilStartFrame();
 
     private:
         SoftwareSerial serial;

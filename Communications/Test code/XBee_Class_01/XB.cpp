@@ -55,7 +55,7 @@ XB::genericPacket XB::readNextGenericPacket() {
     Serial.print("(");
     for (unsigned int i = 0; i < len - 1; i++) {
         if (!serial.available()) {
-            result.length = i;
+            result.length = i; // trying to make output of parseMessage more meaningful
             break;
         }
         byte readByte = serial.read();
@@ -107,7 +107,15 @@ XBpacket XB::parseMessage(genericPacket packet) {
 }
 
 XBpacket XB::receiveMessage() {
+    flushUntilStartFrame();
     return parseMessage(readNextGenericPacket());
+}
+
+void XB::flushUntilStartFrame() {
+    while (serial.peek() != 0x7E) {
+        serial.read();
+        delay(50);
+    }
 }
 
 // See XB::sendRaw
