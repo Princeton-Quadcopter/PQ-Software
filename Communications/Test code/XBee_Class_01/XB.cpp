@@ -2,6 +2,11 @@
 #include "XB.h"
 #include <SoftwareSerial.h>
 
+const byte FRAME_HEADER_MAGIC_BYTE = 0x7E;
+const byte FRAME_TRANSMIT_REQUEST = 0x01;
+const byte FRAME_TRANSMIT_STATUS = 0x89;
+const byte FRAME_RECEIVE_PACKET = 0x81;
+
 XB::XB(uint8_t RX, uint8_t TX, int baudrate)
         : serial(RX, TX, false) {
     // Instantiate serial and begin with given baudrate
@@ -25,20 +30,20 @@ byte getLSB(int a) {
 XB::genericPacket XB::readNextGenericPacket() {
     byte magicByte = serial.read();
     byte temp = serial.read();
-    unsigned int length = (temp << 8) + (serial.read());
+    unsigned int len = (temp << 8) + (serial.read());
     byte checksum = 0;
     genericPacket result;
 
-    if (magicByte != 0x7E || length == 0) {
+    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
         result.goodPacket = false;
         return result;
     }
     result.goodPacket = true;
-    result.len = length - 1;
+    result.length = len - 1;
 
     result.frameType = serial.read();
     checksum += result.frameType;
-    for (int i = 0; i < length - 1; i++) { // TODO: throw error if length is too big
+    for (int i = 0; i < len - 1; i++) {
         result.contents[i] = serial.read();
         checksum += result.contents[i];
     }
@@ -51,8 +56,9 @@ void XB::flushSerial() {
     serial.flush();
 }
 
-// Returns 0x00 if successful
-byte XB::send(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
+// Returns 0x00 if successful; Returns -1 if bad packet or not transmit status or not expected fID;
+// Returns other codes if other errors occurred.
+byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
     sendTransmitRequest(fID, destAddr, options, len, message);
     // Wait for transmit status to be received
     while (!serial.available()) {
@@ -60,31 +66,28 @@ byte XB::send(byte fID, unsigned int destAddr, byte options, unsigned int len, c
     }
 
     // Parse transmit status
-    // TODO: check correct frame type, and correct fID, etc.
     genericPacket result = readNextGenericPacket();
-    if (result.len < 2 || !result.goodPacket)
+    if (result.length < 2 || !result.goodPacket || result.frameType != FRAME_TRANSMIT_STATUS)
+        return -1;
+    if (result.contents[0] != fID)
         return -1;
     return result.contents[1];
-
-    //serial.flush();
 }
 
 // Sends a transmit request to the XBee to send a message to destAddr: frame ID = fID, len is length of message[];
 void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]) {
   // constants
-  const char magicByte = 0x7E;
   const int lenToData = 5;
-  const char transmitRequest = 0x01;
 
   // len is the length of the message
   char payload[len + 9];
   char checksum = 1 + fID + getMSB(destAddr) + getLSB(destAddr) + options;
   
   // beginning of frame
-  payload[0] = magicByte;
+  payload[0] = FRAME_HEADER_MAGIC_BYTE;
   payload[1] = getMSB(len + lenToData);
   payload[2] = getLSB(len + lenToData);
-  payload[3] = transmitRequest; // transmit request 16-bit addr
+  payload[3] = FRAME_TRANSMIT_REQUEST; // transmit request 16-bit addr
   payload[4] = fID;
   payload[5] = getMSB(destAddr);
   payload[6] = getLSB(destAddr);

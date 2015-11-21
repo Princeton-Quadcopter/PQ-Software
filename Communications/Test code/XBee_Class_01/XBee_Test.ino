@@ -25,7 +25,7 @@ void loop()
     digitalWrite(LED, LOW);
 
     // Wait for read buffer to become nonempty (i.e. wait for message)
-    while (!ourXB.anythingtoread()) {
+    while (!ourXB.available()) {
         delay(10);
     }
     delay(100);
@@ -45,7 +45,7 @@ void loop()
     digitalWrite(LED, LOW);
     delay(10);
     Serial.println("About to write");
-    byte result = ourXB.send(1, 0x0000, 0x00, 5, "hello");
+    byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");
     if (result == 0) {
         Serial.println("Writing successful");
     }
