@@ -29,28 +29,31 @@ void loop()
     while (!ourXB.available()) {
         delay(10);
     }
-    delay(100);
 
-    // Serial.print(" --> ");
-    // Serial.println(ourXB.peek(), HEX);
-    //XBpacket pck = ourXB.receiveMessage();
-    ourXB.readNextGenericPacket();
-    // if (pck.type == PACKET_RECEIVE) {
-    //     Serial.println(pck.message);
-    // } else {
-    //     Serial.print("Bad message... Packet type ");
-    //     Serial.println(pck.type);
-    // }
-    // ourXB.flushSerial();
-    
-    // while (ourXB.available()) {
-    //     digitalWrite(LED, HIGH);
-    //     byte received = ourXB.read();
-    //     Serial.println(received, HEX);
-    //     //Serial.print(received);
-    // }
+    while (ourXB.available()) {
+        digitalWrite(LED, HIGH);
+        XBpacket pck = ourXB.receiveMessage();
+        if (pck.type == PACKET_RECEIVE) {
+            Serial.print("Message: ");
+            for (int i = 0; i < pck.length; i++) {
+                Serial.print(pck.message[i]);
+            }
+            Serial.println();
+        } else {
+            Serial.print("Bad message... Type ");
+            Serial.print(pck.type);
+            Serial.print(" length ");
+            Serial.println(pck.length);
+        }
 
-    Serial.println();
+        while (ourXB.available()) {
+            byte received = ourXB.read();
+            Serial.print(received, HEX);
+            Serial.print(" ");
+            //Serial.print(received);
+        }
+        Serial.println();
+    }
 
     // Prepare to send a message to the computer
     digitalWrite(LED, LOW);
@@ -65,18 +68,20 @@ void loop()
     packet.length = 0x05;
     copyStr("hello", packet.message, 0, 0, 5);
 
-    byte result = 0;//ourXB.send(packet);
-    //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 5, "hello");
-    //byte result = ourXB.sendRaw(1, 0x0000, 0x00, 70, "1234567812345678123456781234567812345678123456781234567812345678hiiiii");
+    byte result = ourXB.send(packet);
     if (result == 0) {
         Serial.println("Writing successful");
     }
     delay(10);
     //ourXB.flushSerial();
-    while (ourXB.available()) {
-        digitalWrite(LED, HIGH);
-        byte received = ourXB.read();
-        Serial.println(received, HEX);
-        //Serial.print(received);
+    if (ourXB.available()) {
+        Serial.println("Miscellaneous bytes left in read buffer:");
+        while (ourXB.available()) {
+            byte received = ourXB.read();
+            Serial.print(received, HEX);
+            Serial.print(" ");
+            //Serial.print(received);
+        }
+        Serial.println();
     }
 }

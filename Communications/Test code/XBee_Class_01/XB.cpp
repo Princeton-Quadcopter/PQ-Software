@@ -27,36 +27,49 @@ byte XB::peek() {
 }
 
 XB::genericPacket XB::readNextGenericPacket() {
+    // Get and check frame header magic byte
     byte magicByte = serial.read();
-    byte temp = serial.read();
-    unsigned int len = twoBytesToUInt(temp, serial.read());
-    byte checksum = 0;
     genericPacket result;
 
-    if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0 || len - 1 >= MAX_DATA_SIZE) {
-    //if (magicByte != FRAME_HEADER_MAGIC_BYTE || len == 0) {
+    if (magicByte != FRAME_HEADER_MAGIC_BYTE) {
         result.goodPacket = false;
         return result;
     }
     result.goodPacket = true;
-    result.length = len - 1;
 
+    // Get and check length
+    byte temp = serial.read();
+    unsigned int len = twoBytesToUInt(temp, serial.read());
+    result.length = len - 1;
+    byte checksum = 0;
+
+    //if (len == 0 || len - 1 >= MAX_DATA_SIZE) {
+    if (len == 0) {
+        result.goodPacket = false;
+        return result;
+    }
+
+    // Get frame type and all following bytes until the checksum
     result.frameType = serial.read();
     checksum += result.frameType;
-    Serial.println(len - 1);
+    Serial.print("(");
     for (unsigned int i = 0; i < len - 1; i++) {
+        if (!serial.available()) {
+            result.length = i;
+            break;
+        }
         byte readByte = serial.read();
         result.contents[i] = readByte;
         checksum += readByte;
+        delay(50);
         Serial.print(i);
-        Serial.print(": ");
-        Serial.println(readByte, HEX);
+        Serial.print(" ");
     }
+    Serial.println(")");
+
+    // Check the checksum
     byte expectedCheckSum = serial.read();
     result.goodCheckSum = (0xff - checksum == expectedCheckSum);
-    Serial.println("Checksums: exp vs reality");
-    Serial.println(0xff - checksum, HEX);
-    Serial.println(expectedCheckSum, HEX);
 
     return result;
 }
@@ -66,37 +79,34 @@ void XB::flushSerial() {
 }
 
 // Parses a generic packet as if it's a received message frame.
-// Returns the packet in XBpacket form; if it's not a receive message frame, the `type' field is -1.
+// Returns the packet in XBpacket form; `type' field is:
+//   -1 (255) if not good packet
+//   -2 (254) if not good checksum
+//   -3 if not receive packet
+//   -4 if packet length too short
 XBpacket XB::parseMessage(genericPacket packet) {
     XBpacket result;
 
-    if (!packet.goodPacket || !packet.goodCheckSum) {
-        result.type = -1;
-        return result;
-    }
-
-    Serial.print("Frame type ");
-    Serial.println(packet.frameType, HEX);
-    if (packet.frameType != FRAME_RECEIVE_PACKET || packet.length < 4) {
-        result.type = -1;
-        return result;
-    }
-
     result.type = PACKET_RECEIVE;
+    if (!packet.goodPacket) { result.type = -1; }
+    if (!packet.goodCheckSum) { result.type = -2; }
+    if (packet.frameType != FRAME_RECEIVE_PACKET) { result.type = -2; }
+    if (packet.length < 4) { result.type = -4; }
+
+    if (result.type != PACKET_RECEIVE) {
+        return result;
+    }
+
     result.srcAddr = twoBytesToUInt(packet.contents[0], packet.contents[1]);
     result.RSSI = packet.contents[2];
     result.options = packet.contents[3];
     result.length = packet.length - 4;
-    copyStr(packet.contents, result.message, 0, 4, packet.length - 4);
+    copyStr(packet.contents, result.message, 4, 0, packet.length - 4);
 
     return result;
 }
 
 XBpacket XB::receiveMessage() {
-    // while (serial.peek() != 0x7E) {
-    //     serial.read();
-    //     delay(10);
-    // }
     return parseMessage(readNextGenericPacket());
 }
 
@@ -126,33 +136,33 @@ byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len
 
 // Sends a transmit request to the XBee to send a message to destAddr: frame ID = fID, len is length of message[];
 void XB::sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char* message) {
-  // constants
-  const int lenToData = 5;
+    // constants
+    const int lenToData = 5;
 
-  // len is the length of the message
-  char payload[len + 9];
-  char checksum = 1 + fID + getMSB(destAddr) + getLSB(destAddr) + options;
-  
-  // beginning of frame
-  payload[0] = FRAME_HEADER_MAGIC_BYTE;
-  payload[1] = getMSB(len + lenToData);
-  payload[2] = getLSB(len + lenToData);
-  payload[3] = FRAME_TRANSMIT_REQUEST; // transmit request 16-bit addr
-  payload[4] = fID;
-  payload[5] = getMSB(destAddr);
-  payload[6] = getLSB(destAddr);
-  payload[7] = options;
-  // data
-  for (int i = 0; i < len; i++) {
-    payload[i+8] = message[i];
-    checksum += message[i];
-  }
-  // checksum
-  payload[len + 8] = 0xff - checksum;
+    // len is the length of the message
+    char payload[len + 9];
+    char checksum = 1 + fID + getMSB(destAddr) + getLSB(destAddr) + options;
 
-  // send the message
-  for (int i = 0; i < len + 9; i++) {
+    // beginning of frame
+    payload[0] = FRAME_HEADER_MAGIC_BYTE;
+    payload[1] = getMSB(len + lenToData);
+    payload[2] = getLSB(len + lenToData);
+    payload[3] = FRAME_TRANSMIT_REQUEST; // transmit request 16-bit addr
+    payload[4] = fID;
+    payload[5] = getMSB(destAddr);
+    payload[6] = getLSB(destAddr);
+    payload[7] = options;
+    // data
+    for (int i = 0; i < len; i++) {
+        payload[i+8] = message[i];
+        checksum += message[i];
+    }
+    // checksum
+    payload[len + 8] = 0xff - checksum;
+
+    // send the message
+    for (int i = 0; i < len + 9; i++) {
     serial.print(payload[i]);
     //Serial.println(payload[i], HEX);
-  }
+    }
 }

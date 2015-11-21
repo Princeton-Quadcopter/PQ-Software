@@ -44,16 +44,15 @@ class XB {
         XBpacket parseMessage(genericPacket packet);
         XBpacket receiveMessage();
 
+        // Temporary methods
         byte read();
         byte peek();
         bool available();
         void flushSerial();
 
-        genericPacket readNextGenericPacket();
-
     private:
         SoftwareSerial serial;
-
+        genericPacket readNextGenericPacket();
         void sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]);
         
 };
