@@ -44,7 +44,10 @@ class XB {
         XBpacket parseMessage(genericPacket packet);
         XBpacket receiveMessage();
 
-        // Temporary methods
+        // TODO: Write various methods and structure this architecture to deal with serial only on the level of packets, and not on the level of bytes. A user of this class should not need to worry about the byte-level workings of this class at all.
+        // TODO: e.g. read <--> receiveMessage; available <--> [flushUntilStartFrame and then available]; etc.
+
+        // Temporarily public methods
         byte read();
         byte peek();
         bool available();

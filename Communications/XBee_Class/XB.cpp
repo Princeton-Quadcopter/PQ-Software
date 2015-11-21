@@ -1,6 +1,6 @@
-#include "Arduino.h"
+#include "Arduino.h" // Do we need this included, since it's included in XB.h?
 #include "XB.h"
-#include <SoftwareSerial.h>
+#include <SoftwareSerial.h> // Do we need this included, since it's included in XB.h?
 #include "QCutil.h"
 
 const byte FRAME_HEADER_MAGIC_BYTE = 0x7E;
