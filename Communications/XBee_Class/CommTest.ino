@@ -54,16 +54,20 @@ void loop()
     digitalWrite(LED, HIGH);
     delay(500);
     
-    // build message to send
+    // Build message to send
     QCpacket packet;
     packet.command = 0x01;
     packet.ID = 0x1234;
     packet.length = 0x05;
     Serial.println("About to transmit QCpacket...");
     copyStr("abcde", packet.data, 0, 0, 5);
-    byte result = ourQCXB.sendPacket(packet);
+
+    // Send packet
+    byte result = ourQCXB.sendPacket(0x0000, 0x00, packet);
     if (result == 0) {
         Serial.println("Transmission successful");
+    } else {
+        Serial.println("Transmission failed..?");
     }
 }
 

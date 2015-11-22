@@ -21,7 +21,7 @@ struct QCpacket {
 class QCXB {
     public:
         QCXB(uint8_t RX, uint8_t TX, int baudrate);
-        byte sendPacket(QCpacket packet);
+        byte sendPacket(unsigned int destAddr, byte pID, QCpacket packet);
         QCpacket readNextPacket();
 
     private:

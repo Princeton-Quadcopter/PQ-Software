@@ -8,13 +8,14 @@ QCXB::QCXB(uint8_t RX, uint8_t TX, int baudrate)
     // do stuff here
 }
 
-byte QCXB::sendPacket(QCpacket packet) {
+// Send a QCpacket with specified ID (pID) to the specified destAddr
+byte QCXB::sendPacket(unsigned int destAddr, byte pID, QCpacket packet) {
     // Build XBpacket from QCpacket
     XBpacket xbpkt;
     xbpkt.type = PACKET_SEND;
     xbpkt.options = 0x00;
-    xbpkt.destAddr = 0x0000; // IMPORTANT: we need something to do about the destination address. Will QCpacket have this field?
-    xbpkt.ID = 0x00; // What should we do with this ID? Note: it's only 1 byte wide
+    xbpkt.destAddr = destAddr;
+    xbpkt.ID = pID; // What should we do with this ID? Note: it's only 1 byte wide
     xbpkt.length = 9 + packet.length;
     
     xbpkt.message[0] = packet.command;
