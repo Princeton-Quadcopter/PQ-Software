@@ -29,6 +29,7 @@ QCpacket QCXB::readNextPacket() {
 
     result.command = (uint8_t)received.message[0];
     result.ID = twoBytesToUInt(received.message[1], received.message[2]);
+    result.length = twoBytesToUInt(received.message[3], received.message[4]);
     if (result.length > QCPACKET_MAX_DATA_SIZE)
         result.length = QCPACKET_MAX_DATA_SIZE;
     copyStr(received.message, result.data, 5, 0, result.length);

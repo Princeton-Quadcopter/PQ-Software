@@ -30,11 +30,15 @@ void loop()
     }
 
     // As long as something is available to read, read packet by packet
+    int nTotal = 0;
+    int nSuccessful = 0;
     while (ourQCXB.available()) {
         digitalWrite(LED, HIGH);
         QCpacket pkt = ourQCXB.readNextPacket();
         Serial.println("Packet received");
+        nTotal++;
         if (pkt.command != -1) {
+            nSuccessful++;
             Serial.print("Message: ");
             for (uint16_t i = 0; i < pkt.length; i++) {
                 Serial.print(pkt.data[i]);
@@ -55,12 +59,12 @@ void loop()
     QCpacket packet;
     packet.command = 0x01;
     packet.ID = 0x1234;
-    packet.length = 0x05;
     Serial.println("Transmitting QCpacket...");
-    copyStr("abcde", packet.data, 0x0000, 0x01, 5);
+    packet.length = sprintf(packet.data, "%i received; %i successful.", nTotal, nSuccessful);
+    Serial.println(packet.data);
 
     // Send packet
-    uint8_t result = ourQCXB.sendPacket(0x0000, 0x01, packet);
+    uint8_t result = ourQCXB.sendPacket(0x0000, 0x01, packet); // make second argument anything but 0x00!!
 
     if (result == 0) {
         Serial.println("Successful");
