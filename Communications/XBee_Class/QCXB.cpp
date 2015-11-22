@@ -22,7 +22,6 @@ void QCXB::printLeftoverBytes() {
 
 QCpacket QCXB::readNextPacket() {
     XBpacket received = xb.receiveMessage();
-    delay(100);
     QCpacket result;
     result.command = -1;
     if (received.type != PACKET_RECEIVE)

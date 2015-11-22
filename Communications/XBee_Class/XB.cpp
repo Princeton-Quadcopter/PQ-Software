@@ -115,11 +115,9 @@ XBpacket XB::receiveMessage() {
 // Helper: flush read buffer until first magic byte
 void XB::flushUntilStartFrame() {
     while (serial.peek() != 0x7E && serial.available()) {
-        Serial.print(serial.read());
+        serial.read();
         delay(10);
     }
-    Serial.println();
-    Serial.println("All flushed!");
 }
 
 // Helper: flush the read buffer, but print the bytes in hex in the process

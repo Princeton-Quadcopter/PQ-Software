@@ -26,7 +26,7 @@ void loop()
 
     // Wait for read buffer to become nonempty (i.e. wait for message)
     while (!ourQCXB.available()) {
-        delay(1000);
+        delay(10);
     }
 
     // As long as something is available to read, read packet by packet
@@ -68,8 +68,9 @@ void loop()
         Serial.println("Failed!");
     }
 
-    ourQCXB.printLeftoverBytes();
-    delay(1000);
+    //ourQCXB.printLeftoverBytes();
+    Serial.println();
+    delay(100);
 }
 
 // note: using XCTU to transmit an 8-byte message at 100 ms intervals (even 500 ms) occasionally causes bad packets
