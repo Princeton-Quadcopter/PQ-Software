@@ -5,25 +5,23 @@
 #include <SoftwareSerial.h>
 
 // struct XBpacket stuff
-const byte PACKET_SEND = 0;
-const byte PACKET_RECEIVE = 1;
+const uint8_t PACKET_SEND = 0;
+const uint8_t PACKET_RECEIVE = 1;
 const unsigned int MAX_DATA_SIZE = 64;
 
 struct XBpacket {
-    byte type;
-    
-    unsigned int length; // length of message[]
+    uint8_t type;
+    uint16_t length; // length of message[]
     char message[MAX_DATA_SIZE];
+    uint8_t options;
     
-    byte options;
-
     // relevant only for PACKET_SEND
-    unsigned int destAddr;
-    byte ID;
+    uint16_t destAddr;
+    uint8_t ID;
 
     // relevant only for PACKET_RECEIVE
-    unsigned int srcAddr;
-    byte RSSI;
+    uint16_t srcAddr;
+    uint8_t RSSI;
 };
 
 // class XB stuff
@@ -31,34 +29,37 @@ class XB {
     public:
         //template <int N>
         struct genericPacket { // A very generic struct for storing packet data
-            byte frameType;
-            unsigned int length; // length of contents[]
+            uint8_t frameType;
+            uint16_t length; // length of contents[]
             char contents[MAX_DATA_SIZE];
             bool goodPacket; // true if start delimiter is 7E
             bool goodCheckSum; // true if checksum is correct
         };
 
-        XB(uint8_t RX, uint8_t TX, int baudrate);
-        byte send(XBpacket packet);
-        byte sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]);
-        XBpacket parseMessage(genericPacket packet);
+        XB(uint8_t RX, uint8_t TX, uint16_t baudrate);
+
+        bool available();
+        void flushSerial();
+
+        uint8_t send(XBpacket packet);
+        uint8_t sendRaw(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t len, char message[]);
+        
         XBpacket receiveMessage();
+        XBpacket parseMessage(genericPacket packet); // a helper function: should this be private?
 
         // TODO: Write various methods and structure this architecture to deal with serial only on the level of packets, and not on the level of bytes. A user of this class should not need to worry about the byte-level workings of this class at all.
         // TODO: e.g. read <--> receiveMessage; available <--> [flushUntilStartFrame and then available]; etc.
 
         // Temporarily public methods
-        byte read();
-        byte peek();
-        bool available();
-        void flushSerial();
+        uint8_t read();
+        uint8_t peek();
         void flushUntilStartFrame();
         void printLeftoverBytes();
 
     private:
         SoftwareSerial serial;
         genericPacket readNextGenericPacket();
-        void sendTransmitRequest(byte fID, unsigned int destAddr, byte options, unsigned int len, char message[]);
+        void sendTransmitRequest(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t len, char message[]);
         
 };
 

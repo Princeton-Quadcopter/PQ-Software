@@ -23,36 +23,33 @@ void setup()
 void loop()
 {
     digitalWrite(LED, LOW);
-    delay(500);
 
     // Wait for read buffer to become nonempty (i.e. wait for message)
-    // while (!ourQCXB.available()) {
-    //     delay(10);
-    // }
+    while (!ourQCXB.available()) {
+        delay(1000);
+    }
 
     // As long as something is available to read, read packet by packet
-    // while (ourQCXB.available()) {
-    //     digitalWrite(LED, HIGH);
-    //     XBpacket pck = ourQCXB.receiveMessage();
-    //     if (pck.type == PACKET_RECEIVE) {
-    //         Serial.print("Message: ");
-    //         for (int i = 0; i < pck.length; i++) {
-    //             Serial.print(pck.message[i]);
-    //         }
-    //         Serial.println();
-    //     } else {
-    //         // If we have a bad message, flush the serial and try again
-    //         Serial.print("Bad message... Type ");
-    //         Serial.print(pck.type);
-    //         Serial.print(" length ");
-    //         Serial.println(pck.length);
-    //         ourQCXB.flushSerial();
-    //     }
-    // }
+    while (ourQCXB.available()) {
+        digitalWrite(LED, HIGH);
+        QCpacket pkt = ourQCXB.readNextPacket();
+        Serial.println("Packet received");
+        if (pkt.command != -1) {
+            Serial.print("Message: ");
+            for (uint16_t i = 0; i < pkt.length; i++) {
+                Serial.print(pkt.data[i]);
+            }
+            Serial.println();
+        } else {
+            // If we have a bad message, flush the serial and try again
+            Serial.print("Bad message... Type ");
+            Serial.print(pkt.command);
+            ourQCXB.flushSerial();
+        }
+    }
 
     // Prepare to send a message to the computer
-    digitalWrite(LED, HIGH);
-    delay(500);
+    digitalWrite(LED, LOW);
     
     // Build message to send
     QCpacket packet;
@@ -63,13 +60,16 @@ void loop()
     copyStr("abcde", packet.data, 0x0000, 0x01, 5);
 
     // Send packet
-    byte result = ourQCXB.sendPacket(0x0000, 0x01, packet);
+    uint8_t result = ourQCXB.sendPacket(0x0000, 0x01, packet);
 
     if (result == 0) {
-        Serial.println("Transmission successful");
+        Serial.println("Successful");
     } else {
-        Serial.println("Transmission failed!");
+        Serial.println("Failed!");
     }
+
+    ourQCXB.printLeftoverBytes();
+    delay(1000);
 }
 
 // note: using XCTU to transmit an 8-byte message at 100 ms intervals (even 500 ms) occasionally causes bad packets
