@@ -3,7 +3,7 @@
 #include <QCXB.h>
 #include "QCutil.h"
 
-const int LED = 13; // High when reading
+const int LED = 13; // High when receiving packets
 const int RX = 2;   // RX pin connected to TX of XBee
 const int TX = 3;   // TX pin connected to RX of XBee
 
@@ -11,19 +11,19 @@ QCXB ourQCXB = QCXB(RX, TX, 9600);
 
 void setup()
 {
-    // set up pins
+    // Set up pins
     pinMode(LED, OUTPUT);
     pinMode(RX, INPUT);
     pinMode(TX, OUTPUT);
 
-    // set up serials
+    digitalWrite(LED, LOW); // Turn off receiving indicator
+
+    // Set up hardware serial
     Serial.begin(9600);
 }
 
 void loop()
 {
-    digitalWrite(LED, LOW);
-
     // Wait for read buffer to become nonempty (i.e. wait for message)
     while (!ourQCXB.available()) {
         delay(10);
@@ -33,48 +33,53 @@ void loop()
     int nTotal = 0;
     int nSuccessful = 0;
     while (ourQCXB.available()) {
-        digitalWrite(LED, HIGH);
-        QCpacket pkt = ourQCXB.readNextPacket();
-        Serial.println("Packet received");
+        digitalWrite(LED, HIGH); // Turn on receiving indicator
+
+        // Read the packet and increment count
+        QCpacket pkt = ourQCXB.readNextPacket(); // can stuff screw up here if it tries to read a transmit status as a message?
+        Serial.println("Packet received:");
         nTotal++;
-        if (pkt.command != -1) {
+        if (pkt.command != -1) { // If it's not a bad packet, display message and increment successful count
             nSuccessful++;
-            Serial.print("Message: ");
+            Serial.print("    Message: ");
             for (uint16_t i = 0; i < pkt.length; i++) {
                 Serial.print(pkt.data[i]);
+                if (i > QCPACKET_MAX_DATA_SIZE) // In the case that it's actually a bad packet, buffer overflow may happen. This halts overflow (hopefully)
+                    break;
             }
             Serial.println();
         } else {
-            // If we have a bad message, flush the serial and try again
+            // If we have a bad message, report it, flush the serial and try again
             Serial.print("Bad message... Type ");
             Serial.print(pkt.command);
             ourQCXB.flushSerial();
         }
+        delay(10); // Allow new messages to arrive
     }
-
-    // Prepare to send a message to the computer
-    digitalWrite(LED, LOW);
+    digitalWrite(LED, LOW); // Turn off receiving indicator light
     
     // Build message to send
     QCpacket packet;
     packet.command = 0x01;
     packet.ID = 0x1234;
-    Serial.println("Transmitting QCpacket...");
     packet.length = sprintf(packet.data, "%i received; %i successful.", nTotal, nSuccessful);
-    Serial.println(packet.data);
+    //Serial.println(packet.data);
 
     // Send packet
-    uint8_t result = ourQCXB.sendPacket(0x0000, 0x01, packet); // make second argument anything but 0x00!!
+    Serial.print("Transmitting QCpacket... ");
+    uint8_t result = ourQCXB.sendPacket(0x0000, 0x01, packet); // Make second argument anything but 0x00!!
 
-    if (result == 0) {
+    if (result == 0) { // Report if successful or not
         Serial.println("Successful");
     } else {
         Serial.println("Failed!");
     }
 
     //ourQCXB.printLeftoverBytes();
-    Serial.println();
-    delay(100);
+    Serial.println(); // Leave an empty line between receive/transmit cycles
+    delay(10);
 }
 
-// note: using XCTU to transmit an 8-byte message at 100 ms intervals (even 500 ms) occasionally causes bad packets
+// note: using XCTU to transmit a short message at 200 ms intervals can cause some transmissions to "fail" because the new message arrives before transmit status
+// However, it can receive messages arbitrarily fast (when it doesn't need to transmit between each one)
+//  --> the read buffer could overflow sometimes, causing packets to be missed, though. It's reliable around 20 ms.

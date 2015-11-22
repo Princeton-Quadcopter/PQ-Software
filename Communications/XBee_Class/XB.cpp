@@ -65,7 +65,6 @@ XB::genericPacket XB::readNextGenericPacket() {
         uint8_t readByte = serial.read();
         result.contents[i] = readByte;
         checksum += readByte;
-        delay(10);
     }
 
     // Check the checksum
@@ -116,7 +115,6 @@ XBpacket XB::receiveMessage() {
 void XB::flushUntilStartFrame() {
     while (serial.peek() != 0x7E && serial.available()) {
         serial.read();
-        delay(10);
     }
 }
 
@@ -140,9 +138,8 @@ uint8_t XB::send(XBpacket packet) {
 uint8_t XB::sendRaw(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t len, char* message) {
     sendTransmitRequest(fID, destAddr, options, len, message);
     // Wait for transmit status to be received
-    while (!serial.available()) {
-        delay(10);
-    }
+    delay(10);
+    flushUntilStartFrame();
 
     // Parse transmit status
     genericPacket result = readNextGenericPacket();
