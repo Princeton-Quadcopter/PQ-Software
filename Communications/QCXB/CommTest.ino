@@ -32,7 +32,7 @@ void loop()
     // As long as something is available to read, read packet by packet
     int nTotal = 0;
     int nSuccessful = 0;
-    
+
     while (ourQCXB.available()) {
         digitalWrite(LED, HIGH); // Turn on receiving indicator
 
@@ -40,7 +40,7 @@ void loop()
         QCpacket pkt = ourQCXB.readNextPacket(); // can stuff screw up here if it tries to read a transmit status as a message?
         Serial.println("Packet received:");
         nTotal++;
-        Serial.println(nTotal);
+        //Serial.println(nTotal);
         if (pkt.command != -1) { // If it's not a bad packet, display message and increment successful count
             nSuccessful++;
             Serial.print("    Message: ");
