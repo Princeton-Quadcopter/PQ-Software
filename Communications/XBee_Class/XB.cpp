@@ -51,7 +51,6 @@ XB::genericPacket XB::readNextGenericPacket() {
 
     // Get frame type and all following bytes until the checksum
     result.frameType = serial.read();
-    Serial.println(result.frameType, HEX);
     checksum += result.frameType;
     for (unsigned int i = 0; i < len - 1; i++) {
         if (!serial.available()) {
@@ -144,8 +143,8 @@ byte XB::sendRaw(byte fID, unsigned int destAddr, byte options, unsigned int len
         delay(10);
     }
 
-    printLeftoverBytes();
-    return 0;
+    //printLeftoverBytes();
+    //return 0;
 
     // Parse transmit status
     genericPacket result = readNextGenericPacket();

@@ -59,15 +59,16 @@ void loop()
     packet.command = 0x01;
     packet.ID = 0x1234;
     packet.length = 0x05;
-    Serial.println("About to transmit QCpacket...");
-    copyStr("abcde", packet.data, 0, 0, 5);
+    Serial.println("Transmitting QCpacket...");
+    copyStr("abcde", packet.data, 0x0000, 0x01, 5);
 
     // Send packet
-    byte result = ourQCXB.sendPacket(0x0000, 0x00, packet);
+    byte result = ourQCXB.sendPacket(0x0000, 0x01, packet);
+
     if (result == 0) {
         Serial.println("Transmission successful");
     } else {
-        Serial.println("Transmission failed..?");
+        Serial.println("Transmission failed!");
     }
 }
 

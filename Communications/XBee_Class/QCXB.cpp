@@ -15,7 +15,7 @@ byte QCXB::sendPacket(unsigned int destAddr, byte pID, QCpacket packet) {
     xbpkt.type = PACKET_SEND;
     xbpkt.options = 0x00;
     xbpkt.destAddr = destAddr;
-    xbpkt.ID = pID; // What should we do with this ID? Note: it's only 1 byte wide
+    xbpkt.ID = pID;
     xbpkt.length = 9 + packet.length;
     
     xbpkt.message[0] = packet.command;

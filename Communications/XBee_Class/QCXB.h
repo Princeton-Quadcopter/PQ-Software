@@ -24,8 +24,10 @@ class QCXB {
         byte sendPacket(unsigned int destAddr, byte pID, QCpacket packet);
         QCpacket readNextPacket();
 
-    private:
         XB xb;
+
+    private:
+        //XB xb;
 };
 
 #endif
