@@ -4,15 +4,15 @@
 #include "Arduino.h"
 
 // returns the MSB of 2 bytes
-byte getMSB(int a);
+uint8_t getMSB(uint16_t a);
 
 // returns the LSB of sequence of bytes
-byte getLSB(int a);
+uint8_t getLSB(uint16_t a);
 
 // converts two bytes into an unsigned int
-unsigned int twoBytesToUInt(byte msb, byte lsb);
+uint16_t twoBytesToUInt(uint8_t msb, uint8_t lsb);
 
 // copies string src to string dest, from ind onwards, for length len
-void copyStr(char* src, char* dest, int indsrc, int inddest, int len);
+void copyStr(char src[], char dest[], uint16_t indsrc, uint16_t inddest, uint16_t len);
 
 #endif
