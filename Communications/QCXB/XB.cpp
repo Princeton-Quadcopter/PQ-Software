@@ -29,7 +29,7 @@ void XB::flushSerial() {
 }
 
 // See XB::sendRaw
-uint8_t XB::send(XBpacket packet) {
+uint8_t XB::send(genericPacket packet) {
     return sendRaw(packet.ID, packet.destAddr, packet.options, packet.length, packet.message);
 }
 
@@ -53,7 +53,7 @@ uint8_t XB::sendRaw(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t le
 
 // Flush everything until the first magic byte, then read the next generic packet
 // and parse it as though it were a message packet.
-XBpacket XB::receiveMessage() {
+genericPacket* XB::receiveMessage() {
     flushUntilStartFrame();
     return parseMessage(readNextGenericPacket());
 }
@@ -111,7 +111,7 @@ void XB::sendTransmitRequest(uint8_t fID, uint16_t destAddr, uint8_t options, ui
     }
 }
 
-XB::genericPacket XB::readNextGenericPacket() {
+XB::genericPacket* XB::readNextGenericPacket() {
     // Get and check frame header magic byte
     uint8_t magicByte = serial.read();
     genericPacket result;

@@ -7,14 +7,17 @@
 // struct QCpacket stuff
 const uint16_t QCPACKET_MAX_DATA_SIZE = 32;
 
-struct QCpacket {
-    uint8_t command; // 1 byte command
-    uint16_t ID; // 2 byte ID
+class QCpacket {
+    public:
+        QCpacket(genericPacket* pkt);
 
-    uint16_t length; // 2 byte length of data[]
-    char data[QCPACKET_MAX_DATA_SIZE]; // 32(could change) byte data field
-    
-    uint32_t hash; // 4 byte hash
+        uint8_t command; // 1 byte command
+        uint16_t ID; // 2 byte ID
+
+        uint16_t length; // 2 byte length of data[]
+        char* data; // dynamic size data field
+        
+        uint32_t hash; // 4 byte hash
 };
 
 // class QCXB stuff
@@ -25,8 +28,8 @@ class QCXB {
         bool available(); // Returns true if packets available to read
         void flushSerial(); // Flushes everything in XBee serial
 
-        uint8_t sendPacket(uint16_t destAddr, uint8_t pID, QCpacket packet); // Send QCpacket to address with specified ID (not 0x00!)
-        QCpacket readNextPacket(); // Reads and returns next QCpacket
+        uint8_t sendPacket(QCpacket* packet); // Send QCpacket
+        uint8_t readNextPacket(QCpacket* ret); // Reads and returns next QCpacket
 
         uint8_t getLastRSSI(); // Returns RSSI of last received packet
 

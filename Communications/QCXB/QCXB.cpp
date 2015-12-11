@@ -45,31 +45,31 @@ uint8_t QCXB::sendPacket(uint16_t destAddr, uint8_t pID, QCpacket packet) {
 }
 
 // Reads the next packet as though it were a QCpacket
-QCpacket QCXB::readNextPacket() {
+QCpacket* QCXB::readNextPacket() {
     // Read next packet
     XBpacket received = xb.receiveMessage();
 
     // Build QCpacket from received information
-    QCpacket result;
-    result.command = -1;
+    QCpacket* result = new QCpacket();
+    result->command = -1;
     if (received.type != PACKET_RECEIVE) // If it's not a valid packet, reject
-        return result;
+        return -1;
 
     // Note: this will freak out if we didn't actually receive a QCpacket!
-    result.command = (uint8_t)received.message[0];
-    result.ID = twoBytesToUInt(received.message[1], received.message[2]);
-    result.length = twoBytesToUInt(received.message[3], received.message[4]);
-    if (result.length > QCPACKET_MAX_DATA_SIZE)
-        result.length = QCPACKET_MAX_DATA_SIZE;
-    copyStr(received.message, result.data, 5, 0, result.length);
+    result->command = (uint8_t)received.message[0];
+    result->ID = twoBytesToUInt(received.message[1], received.message[2]);
+    result->length = twoBytesToUInt(received.message[3], received.message[4]);
+    if (result->length > QCPACKET_MAX_DATA_SIZE)
+        result->length = QCPACKET_MAX_DATA_SIZE;
+    copyStr(received.message, result->data, 5, 0, result->length);
 
-    // TODO: calculate the checksum for the received bytes and compare with result.hash.
+    // TODO: calculate the checksum for the received bytes and compare with result->hash.
     // Perhaps output a byte for good checksum, and take QCpacket* as an argument that can be edited? Callback functions??
     // FUNDAMENTAL PROBLEM: how should we output multiple values from a function? Pairs? Tuples?
-    result.hash = fourBytesToULong(received.message[5 + result.length],
-                                   received.message[6 + result.length],
-                                   received.message[7 + result.length],
-                                   received.message[8 + result.length]);
+    result->hash = fourBytesToULong(received.message[5 + result->length],
+                                   received.message[6 + result->length],
+                                   received.message[7 + result->length],
+                                   received.message[8 + result->length]);
 
     // Note: srcAddr and RSSI are going to waste. Any way to output these? Perhaps maintain an instance variable called "last srcAddr" and "last RSSI"? Maybe we should do this for XB too and restructure XBpacket? I.e. no address fields and no RSSI field
     lastRSSI = received.RSSI;
