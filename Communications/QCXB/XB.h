@@ -4,36 +4,31 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
-// struct XBpacket stuff
-const uint8_t PACKET_SEND = 0;
-const uint8_t PACKET_RECEIVE = 1;
-const unsigned int MAX_DATA_SIZE = 64;
-
-struct XBpacket {
-    uint8_t type;
-    uint16_t length; // length of message[]
-    char message[MAX_DATA_SIZE];
-    uint8_t options;
-    
-    // relevant only for PACKET_SEND
-    uint16_t destAddr;
-    uint8_t ID;
-
-    // relevant only for PACKET_RECEIVE
-    uint16_t srcAddr;
-    uint8_t RSSI;
+enum FrameType {
+    TRANSMIT_REQUEST    = 0x01;
+    TRANSMIT_STATUS     = 0x89;
+    RECEIVE_PACKET      = 0x81;
 };
 
-class genericPacket { // A very generic class for storing packet data
+class XBPacket { // A very generic class for storing packet data
     public:
-        genericPacket(SoftwareSerial* sserial); // first constructor: take SoftwareSerial* and construct itself from the serial
-        genericPacket(uint8_t frameType, char* contents, uint16_t len);
+        XBPacket(SoftwareSerial* sSerial); // Construct Generic Packet from Serial
+        XBPacket(uint16_t destAddr, uint8_t* message, uint16_t len); // Construct a Transmit Request for Data
 
-        uint8_t frameType;
-        uint16_t length; // length of contents[]
-        char contents[MAX_DATA_SIZE];
-        bool goodPacket; // true if start delimiter is 7E
-        bool goodCheckSum; // true if checksum is correct
+        ~XBPacket();
+
+        bool isGoodPacket; // true if checksum and magic byte (0x7E) are correct
+
+        uint8_t getRSSI(); // Return RSSI, or 127 if FrameType != RECEIVE_PACKET
+        uint16_t getAddr(); // Return Address, or 2^16-1 if FrameType == TRANSMIT_STATUS
+
+        uint16_t sendPacket(SoftwareSerial *sSerial);
+
+    private:
+        uint8_t mFrameType;
+        uint16_t mLength; // Length of mContents
+        uint8_t* mContents;
+        uint8_t mChecksum;
 };
 
 // class XB stuff
@@ -41,28 +36,23 @@ class XB {
     public:
         XB(uint8_t RX, uint8_t TX, uint16_t baudrate); // Constructor (specify RX and TX pins and the baudrate)
 
+        ~XB();
+
         bool available(); // Returns true if packets available to read
         void flushSerial(); // Flushes everything in XBee serial
 
-        uint8_t send(genericPacket* packet, uint8_t fID, uint16_t destAddr, uint8_t options); // Sends XBpacket, and
-        uint8_t sendRaw(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t len, char message[]); // Basically same as send, but not wrapped in an XBpacket
-        
-        XBpacket receiveMessage(); // Receives and returns next message in the form of an XBpacket. Will reject if it's not a 'received message' packet
-
-        // Temporarily public methods
-        void flushUntilStartFrame(); // Same as the equivalent method in QCXB
-        void printLeftoverBytes(); // Same as the equivalent method in QCXB
+        uint16_t send(XBPacket* packet); // Sends genericPacket      
+        XBPacket* receive(); // Receives and returns next message in the form of an XBpacket. Will reject if it's not a 'received message' packet
 
     private:
-        SoftwareSerial serial;
-
-        void sendTransmitRequest(uint8_t fID, uint16_t destAddr, uint8_t options, uint16_t len, char message[]); // Send the raw transmit request to the XBee
-        genericPacket readNextGenericPacket(); // Reads and returns a generic packet from the XBee serial
-        XBpacket parseMessage(genericPacket packet); // Helper function to extract message from genericPacket to put into XBpacket
+        SoftwareSerial *serial;
 
         // Temporary methods for debugging use
         uint8_t read();
         uint8_t peek();
+
+        // Temporarily public methods
+        void flushUntilStartFrame(); // Read until we hit delmiter 0x7E
 };
 
 #endif
