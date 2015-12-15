@@ -4,6 +4,16 @@
 #include "Arduino.h" // Do we still need this included, since it's included in XB.h?
 #include "QCXB.h"
 
+enum QCstate {
+    CONNECTED           = 0x00;
+    DISCONNECTED        = 0x01;
+    WAITING_FOR_SYNACK  = 0x02;
+};
+
+enum HeartbeatState {
+    stuff = 0;
+};
+
 // class ProtoQC stuff
 class ProtoQC {
     public:
@@ -20,7 +30,7 @@ class ProtoQC {
         // sensory info either as serialized array of char, or a new class
 
     private:
-        state // (enum type), including connected
+        QCstate state;
 };
 
 #endif
